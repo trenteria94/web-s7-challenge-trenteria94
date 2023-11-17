@@ -17,18 +17,20 @@ const userSchema = yup.object().shape({
   size: yup.string()
     .required()
     .oneOf(['S', 'M', 'L'], validationErrors.sizeIncorrect),
+  toppings: yup.array()
+    .optional()
 })
 
 const getInitialValues = () => ({
   fullName: "",
   size: "",
-  toppings: ""
+  toppings: []
 })
 
 const getInitialErrors = () => ({
   fullName: "",
   size: "",
-  toppings: ""
+  toppings: []
 })
 // 👇 This array could help you construct your checkboxes using .map in the JSX.
 const toppings = [
@@ -49,6 +51,7 @@ const [error, setError] = useState(getInitialErrors())
 useEffect(() => {
   userSchema.isValid(values).then(setformEnabled)
 }, [values])
+
 const onChange = evt => {
   let { value, type, name, checked } = evt.target
   value = type == 'checkbox' ? checked : value
@@ -61,7 +64,16 @@ const onChange = evt => {
 const onSubmit = evt => {
   evt.preventDefault()
   axios.
-    post('http://localhost:9009/api/order')
+    post('http://localhost:9009/api/order', values)
+    .then(res => {
+      setValues(getInitialValues())
+      setSuccess(res.data.message)
+      setFailure()
+    })
+    .catch(err => {
+      setFailure(err.response.data.message)
+      setSuccess()
+    })
 }
   return (
     <form onSubmit={onSubmit}>
@@ -93,11 +105,15 @@ const onSubmit = evt => {
 
       <div className="input-group">
         {/* 👇 Maybe you could generate the checkboxes dynamically */}
-        {toppings.map(topping => (
+        {toppings.map((topping, index) => (
           <label key={topping.topping_id}>
             <input
-              name={topping.text}
+              name= "toppings"
               type='checkbox'
+              value={topping.text}
+              id={topping.text}
+              checked={values.toppings[index] === topping.text}
+              onChange={onChange}
             />
             {topping.text}<br />
           </label>
