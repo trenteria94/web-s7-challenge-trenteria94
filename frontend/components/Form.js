@@ -40,39 +40,49 @@ const toppings = [
 ]
 
 export default function Form() {
-const [formEnabled, setformEnabled] = useState(false)
-const [success, setSuccess] = useState("")
-const [failure, setFailure] = useState("")
-const [values, setValues] = useState(getInitialValues)
-const [error, setError] = useState(getInitialErrors)
+  const [formEnabled, setformEnabled] = useState(false)
+  const [success, setSuccess] = useState("")
+  const [failure, setFailure] = useState("")
+  const [values, setValues] = useState(getInitialValues)
+  const [error, setError] = useState(getInitialErrors)
 
-useEffect(() => {
-  userSchema.isValid(values).then(setformEnabled)
-}, [values])
+  useEffect(() => {
+    userSchema.isValid(values).then(setformEnabled)
+  }, [values])
 
-const onChange = evt => {
-  let { value, type, name, checked, id } = evt.target
-  value = type == 'checkbox' ? checked : value 
-  setValues({ ...values, [name]: value })
-  //yup.reach(userSchema, name).validate(value)
-  //.then(() => setError({...error, [name]: ""}))
-  //.catch((err) => setError({...error, [name]: err.errors[0]}))
-}
+  const onChange = evt => {
+    let { value, type, name, checked } = evt.target
+    if (type == 'checkbox') {
+      let updatedToppings
+      if (checked) {
+        updatedToppings = [...values.toppings, value]
+      } else {
+        updatedToppings = values.toppings.filter(item => item !== value)
+      }
+      setValues({ ...values, [name]: updatedToppings })
+    } else {
+      setValues({ ...values, [name]: value })
+    }
 
-const onSubmit = evt => {
-  evt.preventDefault()
-  axios.
-    post('http://localhost:9009/api/order', values)
-    .then(res => {
-      setValues(getInitialValues())
-      setSuccess(res.data.message)
-      setFailure()
-    })
-    .catch(err => {
-      setFailure(err.response.data.message)
-      setSuccess()
-    })
-}
+    yup.reach(userSchema, name).validate(value)
+      .then(() => setError({ ...error, [name]: "" }))
+      .catch((err) => setError({ ...error, [name]: err.errors[0] }))
+  }
+
+  const onSubmit = evt => {
+    evt.preventDefault()
+    axios.
+      post('http://localhost:9009/api/order', values)
+      .then(res => {
+        setValues(getInitialValues)
+        setSuccess(res.data.message)
+        setFailure()
+      })
+      .catch(err => {
+        setFailure(err)
+        setSuccess()
+      })
+  }
   return (
     <form onSubmit={onSubmit}>
       <h2>Order Your Pizza</h2>
@@ -107,7 +117,7 @@ const onSubmit = evt => {
           <label key={topping.topping_id}>
             <input
               //id={topping.topping_id}
-              name={topping.text}
+              name='toppings'
               type='checkbox'
               onChange={onChange}
               checked={values.toppings.includes(topping.topping_id)}
@@ -115,18 +125,10 @@ const onSubmit = evt => {
             />
             {topping.text}<br />
           </label>
-        ))}
-        {/*<label key="1">
-          <input
-            name="Pepperoni"
-            type="checkbox"
-          />
-          Pepperoni<br />
-        </label>*/}
+        ))} 
       </div>
       {/* 👇 Make sure the submit stays disabled until the form validates! */}
       <input disabled={!formEnabled} type="submit" />
     </form>
   )
 }
- 
