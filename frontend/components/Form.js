@@ -17,21 +17,19 @@ const userSchema = yup.object().shape({
   size: yup.string()
     .required()
     .oneOf(['S', 'M', 'L'], validationErrors.sizeIncorrect),
-  toppings: yup.array()
-    .optional()
+  toppings: yup.array().of(yup.string())
 })
 
-const getInitialValues = () => ({
+const getInitialValues = {
   fullName: "",
   size: "",
   toppings: []
-})
+}
 
-const getInitialErrors = () => ({
+const getInitialErrors = {
   fullName: "",
-  size: "",
-  toppings: []
-})
+  size: ""
+}
 // 👇 This array could help you construct your checkboxes using .map in the JSX.
 const toppings = [
   { topping_id: '1', text: 'Pepperoni' },
@@ -43,22 +41,22 @@ const toppings = [
 
 export default function Form() {
 const [formEnabled, setformEnabled] = useState(false)
-const [success, setSuccess] = useState()
-const [failure, setFailure] = useState()
-const [values, setValues] = useState(getInitialValues())
-const [error, setError] = useState(getInitialErrors())
+const [success, setSuccess] = useState("")
+const [failure, setFailure] = useState("")
+const [values, setValues] = useState(getInitialValues)
+const [error, setError] = useState(getInitialErrors)
 
 useEffect(() => {
   userSchema.isValid(values).then(setformEnabled)
 }, [values])
 
 const onChange = evt => {
-  let { value, type, name, checked } = evt.target
-  value = type == 'checkbox' ? checked : value
+  let { value, type, name, checked, id } = evt.target
+  value = type == 'checkbox' ? checked : value 
   setValues({ ...values, [name]: value })
-  yup.reach(userSchema, name).validate(value)
-  .then(() => setError({...error, [name]: ""}))
-  .catch((err) => setError({...error, [name]: err.errors[0]}))
+  //yup.reach(userSchema, name).validate(value)
+  //.then(() => setError({...error, [name]: ""}))
+  //.catch((err) => setError({...error, [name]: err.errors[0]}))
 }
 
 const onSubmit = evt => {
@@ -105,15 +103,15 @@ const onSubmit = evt => {
 
       <div className="input-group">
         {/* 👇 Maybe you could generate the checkboxes dynamically */}
-        {toppings.map((topping, index) => (
+        {toppings.map((topping) => (
           <label key={topping.topping_id}>
             <input
-              name= "toppings"
+              //id={topping.topping_id}
+              name={topping.text}
               type='checkbox'
-              value={topping.text}
-              id={topping.text}
-              checked={values.toppings[index] === topping.text}
               onChange={onChange}
+              checked={values.toppings.includes(topping.topping_id)}
+              value={topping.topping_id}
             />
             {topping.text}<br />
           </label>
@@ -131,3 +129,4 @@ const onSubmit = evt => {
     </form>
   )
 }
+ 
